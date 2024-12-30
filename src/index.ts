@@ -78,8 +78,58 @@ app.post('/api/v1/signup', async (c) => {
 });
 
 
-app.post('/api/v1/signin', (c) => {
-  return c.json('Hello Hono!')
+app.post('/api/v1/signin', async (c) => {
+  const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
+
+  const body = await c.req.json();
+
+  const findUser = await prisma.user.findUnique({
+    where: {
+      email: body.email,
+    },
+    select: {
+      email: true,
+      id: true,
+      name: true
+    }
+  })
+
+  if (!findUser) {
+    return c.json({
+      success: false,
+      message: 'user not found , Regester'
+    }, 400)
+  }
+
+  try {
+    const payload: {
+      name: string | null,
+      exp: number,
+      email: string,
+      id: string
+    } = {
+      ...findUser,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+    }
+
+
+    const token = await sign(payload, c.env.JWT_KEY);
+
+    return c.json({
+      success: true,
+      message: 'user loggedIn successfully',
+      token: token
+    })
+  } catch (e) {
+
+    return c.json({
+      success: false,
+      error: e,
+      message: 'Failed Logged In REQUEST',
+    }, 400)
+  }
+
+
 });
 
 
