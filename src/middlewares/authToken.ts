@@ -46,8 +46,9 @@ export const authToken = createMiddleware<{
     } catch (e) {
         return c.json({
             success: false,
+            error: e,
             message: 'Unexpected error occurred while verifying the token.',
-        });
+        }, 403);
     }
 });
 
