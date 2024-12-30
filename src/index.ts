@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import BlogRoutes from './routes/blogRoutes'
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
-import { decode, sign, verify } from 'hono/jwt'
+import { sign } from 'hono/jwt'
 
 const app = new Hono<{
   Bindings: {
@@ -55,7 +55,6 @@ app.post('/api/v1/signup', async (c) => {
     }
     const token: string = await sign(payload, c.env.JWT_KEY)
 
-    console.log(token)
 
     return c.json({
       success: true,
