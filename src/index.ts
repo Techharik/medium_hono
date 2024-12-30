@@ -3,6 +3,7 @@ import BlogRoutes from './routes/blogRoutes'
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { sign } from 'hono/jwt'
+import bcrypt from 'bcryptjs';
 
 const app = new Hono<{
   Bindings: {
@@ -34,11 +35,13 @@ app.post('/api/v1/signup', async (c) => {
       }, 400)
     }
 
+    var hashPassword = bcrypt.hashSync(body.password, 10);
+    console.log(hashPassword)
 
     let response = await prisma.user.create({
       data: {
         name: body.name,
-        password: body.password,
+        password: hashPassword,
         email: body.email
       },
       select: {
@@ -87,16 +90,28 @@ app.post('/api/v1/signin', async (c) => {
     select: {
       email: true,
       id: true,
-      name: true
+      name: true,
+      password: true
     }
   })
 
+
+  console.log(findUser)
   if (!findUser) {
     return c.json({
       success: false,
-      message: 'user not found , Regester'
+      message: 'user not found , Register'
     }, 400)
   }
+  const hashPassword = bcrypt.compareSync(body.password, findUser.password); // true
+
+  if (!hashPassword) {
+    return c.json({
+      success: false,
+      message: 'password is Incorrect'
+    }, 400)
+  }
+
 
   try {
     const payload: {
