@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { sign } from 'hono/jwt'
 import bcrypt from 'bcryptjs';
+import { signInInput, signUpInput } from '@pattari/medium-types'
 
 const app = new Hono<{
   Bindings: {
@@ -17,6 +18,16 @@ app.post('/api/v1/signup', async (c) => {
   const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate())
 
   const body = await c.req.json();
+  const { success, error } = signUpInput.safeParse(body);
+
+  if (!success) {
+    return c.json({
+      success: false,
+      error: error,
+      message: 'validation failed'
+    }, 400)
+  }
+
   try {
 
     const email = body.email;
@@ -82,6 +93,15 @@ app.post('/api/v1/signin', async (c) => {
   const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
 
   const body = await c.req.json();
+  const { success, error } = signInInput.safeParse(body);
+
+  if (!success) {
+    return c.json({
+      success: false,
+      error: error,
+      message: 'validation failed'
+    }, 400)
+  }
 
   const findUser = await prisma.user.findUnique({
     where: {
@@ -101,7 +121,7 @@ app.post('/api/v1/signin', async (c) => {
     return c.json({
       success: false,
       message: 'user not found , Register'
-    }, 400)
+    }, 403)
   }
   const hashPassword = bcrypt.compareSync(body.password, findUser.password); // true
 
@@ -143,16 +163,6 @@ app.post('/api/v1/signin', async (c) => {
 
 
 });
-
-
-
-
-
-
-
-
-
-
 
 
 app.route('/api/v1/m', BlogRoutes)

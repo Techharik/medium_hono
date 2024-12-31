@@ -8,6 +8,7 @@ export const authToken = createMiddleware<{
     Bindings: {
         JWT_KEY: string;
     };
+    //variable we need to set the when we do c.set() --> set the types here tp avoid type error in c.get()
     Variables: {
         user: {
             id: string,
@@ -19,13 +20,11 @@ export const authToken = createMiddleware<{
     async (c, next: () => Promise<void>) => {
         const authHeader = c.req.header('Authorization');
 
-        // If there's no Authorization header or it doesn't start with "Bearer", respond with Unauthorized
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return c.json({ error: 'Unauthorized' }, 401);
         }
 
-        // Extract token from the Authorization header
-        const token = authHeader.substring(7); // Remove "Bearer " prefix
+        const token = authHeader.substring(7);
 
         if (!token) {
             return c.json({

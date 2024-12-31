@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { authToken } from "../middlewares/authToken";
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
+import { blogInInput, blogInInputUpdate } from '@pattari/medium-types'
 
 
 const app = new Hono<{
@@ -37,6 +38,18 @@ app.post('/blog', authToken, async (c) => {
     const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
     const loggedInId = c.get('user');
     const body = await c.req.json();
+
+    const { success, error } = blogInInput.safeParse(body);
+
+    if (!success) {
+        return c.json({
+            success: false,
+            error: error,
+            message: 'validation failed'
+        }, 400)
+    }
+
+
     try {
 
         const response = await prisma.blog.create({
@@ -65,7 +78,15 @@ app.put('/blog/:id', authToken, async (c) => {
     const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
     const id = c.req.param('id');
     const body = await c.req.json();
+    const { success, error } = blogInInputUpdate.safeParse(body);
 
+    if (!success) {
+        return c.json({
+            success: false,
+            error: error,
+            message: 'validation failed'
+        }, 400)
+    }
     try {
 
         const fetchBlog = await prisma.blog.update({
