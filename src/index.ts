@@ -5,6 +5,7 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 import { sign } from 'hono/jwt'
 import bcrypt from 'bcryptjs';
 import { signInInput, signUpInput } from '@pattari/medium-types'
+import { cors } from 'hono/cors'
 
 const app = new Hono<{
   Bindings: {
@@ -12,6 +13,8 @@ const app = new Hono<{
     JWT_KEY: string
   }
 }>()
+app.use('/api/*', cors())
+
 
 app.post('/api/v1/signup', async (c) => {
 
